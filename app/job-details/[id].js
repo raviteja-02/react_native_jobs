@@ -10,14 +10,39 @@ const tabs = ["About", "Qualifications", "Responsibilities"];
 
 const JobDetails = () => {
     const params = useSearchParams();
-    const router = useRoouter();
+    const router = useRouter();
 
     const { data, isLoading, error, refetch } = useFetch1('job-details', {job_id: params.id})
 
     const [refresh, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState(tabs[0]);
 
-    const onRefresh = () => {}
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        refetch();
+        setRefreshing(false);
+    }, []);
+
+    const displayTabContent = () => {
+        switch (activeTab) {
+            case "About":
+                return <JobAbout 
+                            info={data[0].job_description ?? "No data found"} 
+                        />;
+            case "Qualifications":
+                return <Specifics 
+                            title="Qualifications"
+                            points={data[0].job_highlights?.Qualifications ?? ['N/A']}
+                        />;
+            case "Responsibilities":
+                return <Specifics 
+                            title="Qualifications"
+                            points={data[0].job_highlights?.Responsibilities ?? ['N/A']}
+                        />;
+            default:
+                break;
+        }
+    }
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.lightWhite }}>
@@ -63,12 +88,16 @@ const JobDetails = () => {
                                 activeTab={activeTab}
                                 setActiveTab={setActiveTab}
                             />
+
+                            {displayTabContent()}
                         </View>
                     )}
                 </ScrollView>
+
+                <JobFooter url={data[0]?.job_google_link ?? 'https://careers.google.com/jobs/results'} />
             </>
         </SafeAreaView>
     )
 }
 
-export default JobDetails;
+export default JobDetails
