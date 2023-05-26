@@ -20,22 +20,6 @@ const Nearbyjobs = () => {
     navigation.navigate("JobDetails", { jobId });
   };
 
-  const renderJobCards = () => {
-    const jobCards = [];
-
-    data?.forEach((job) => {
-      jobCards.push(
-        <NearbyJobCard
-          key={`nearby-job-${job.job_id}`}
-          job={job}
-          handleNavigate={() => handleNavigate(job.job_id)}
-        />
-      );
-    });
-
-    return renderJobCards;
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -51,7 +35,13 @@ const Nearbyjobs = () => {
         ) : error ? (
           <Text>Something went wrong</Text>
         ) : (
-          renderJobCards()
+          data?.map((job) => (
+            <NearbyJobCard
+              key={`nearby-job-${job.job_id}`}
+              job={job}
+              handleNavigate={() => handleNavigate(job.job_id)}
+            />
+          ))
         )}
       </View>
     </View>
