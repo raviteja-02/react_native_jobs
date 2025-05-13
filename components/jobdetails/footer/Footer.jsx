@@ -6,8 +6,8 @@ import { icons } from "../../../constants";
 
 const Footer = ({ url }) => {
   return (
-    <View>
-      <TouchableOpacity>
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.likeBtn}>
         <Image
           source={icons.heartOutline}
           resizeMode="contain"

@@ -12,11 +12,16 @@ import { useRouter } from "expo-router";
 import styles from "./welcome.style";
 import { icons, SIZES } from "../../../constants";
 
-const jobTypes = ["Full-time", "Part-time", "Contractor"];
+const jobTypes = ["Full-time", "Part-time", "Contractor", "Remote"];
 
-const Welcome = ({ searchTerm, setSearchTerm, handleClick }) => {
+const Welcome = ({ searchTerm, setSearchTerm, handleClick, onJobTypeSelect }) => {
   const router = useRouter();
   const [activeJobType, setActiveJobType] = useState("Full-time");
+
+  const handleJobTypePress = (item) => {
+    setActiveJobType(item);
+    onJobTypeSelect(item);
+  };
 
   return (
     <View>
@@ -29,10 +34,7 @@ const Welcome = ({ searchTerm, setSearchTerm, handleClick }) => {
           <TextInput
             style={styles.searchInput}
             value={searchTerm}
-            onChangeText={(text) => {
-              setSearchTerm(text);
-              setQuery(text);
-            }}
+            onChangeText={setSearchTerm}
             placeholder="What are you looking for?"
           />
         </View>
@@ -50,10 +52,7 @@ const Welcome = ({ searchTerm, setSearchTerm, handleClick }) => {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.tab(activeJobType, item)}
-              onPress={() => {
-                setActiveJobType(item);
-                router.push(`/search/${item}`);
-              }}
+              onPress={() => handleJobTypePress(item)}
             >
               <Text style={styles.tabText(activeJobType, item)}>{item}</Text>
             </TouchableOpacity>

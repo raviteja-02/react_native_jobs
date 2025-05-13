@@ -1,5 +1,5 @@
-import { Text, View, SafeAreaView, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
-import { Stack, useRoouter, useSearchParams } from "expo-router";
+import { Text, View, SafeAreaView, ScrollView, ActivityIndicator, RefreshControl, TouchableOpacity } from "react-native";
+import { Stack, useRouter, useSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 
 import { Company, JobAbout, JobFooter, JobTabs, ScreenHeaderBtn, Specifics } from "../../components";
@@ -12,43 +12,49 @@ const JobDetails = () => {
     const params = useSearchParams();
     const router = useRouter();
 
-    const { data, isLoading, error, refetch } = useFetch1('job-details', {job_id: params.id})
+    const { data, isLoading, error, refetch } = useFetch1('job-details', {
+        job_id: params.id,
+        extended_publisher_details: 'true'
+    });
 
-    const [refresh, setRefreshing] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState(tabs[0]);
 
-    const onRefresh = useCallback(() => {
+    const onRefresh = useCallback(async () => {
         setRefreshing(true);
-        refetch();
+        await refetch();
         setRefreshing(false);
-    }, []);
+    }, [refetch]);
 
     const displayTabContent = () => {
+        if (!data || data.length === 0) return null;
+
+        const jobData = data[0];
         switch (activeTab) {
             case "About":
                 return <JobAbout 
-                            info={data[0].job_description ?? "No data found"} 
+                            info={jobData.job_description ?? "No description available"} 
                         />;
             case "Qualifications":
                 return <Specifics 
                             title="Qualifications"
-                            points={data[0].job_highlights?.Qualifications ?? ['N/A']}
+                            points={jobData.job_highlights?.Qualifications ?? ['No qualifications specified']}
                         />;
             case "Responsibilities":
                 return <Specifics 
-                            title="Qualifications"
-                            points={data[0].job_highlights?.Responsibilities ?? ['N/A']}
+                            title="Responsibilities"
+                            points={jobData.job_highlights?.Responsibilities ?? ['No responsibilities specified']}
                         />;
             default:
-                break;
+                return null;
         }
     }
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.lightWhite }}>
             <Stack.Screen
-                options = {{
-                    headerStyle: { backgroundColor: COLORS.lightWhite},
+                options={{
+                    headerStyle: { backgroundColor: COLORS.lightWhite },
                     headerShadowVisible: false,
                     headerBackVisible: false,
                     headerLeft: () => (
@@ -68,15 +74,42 @@ const JobDetails = () => {
                 }}
             />
             <>
-                <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}>
+                <ScrollView 
+                    showsVerticalScrollIndicator={false} 
+                    refreshControl={
+                        <RefreshControl 
+                            refreshing={refreshing} 
+                            onRefresh={onRefresh}
+                            colors={[COLORS.primary]}
+                        />
+                    }
+                >
                     {isLoading ? (
-                        <ActivityIndicator size="large" color={COLORS.primary} />
-                    ) : error ?(
-                        <Text>Something went wrong</Text>
-                    ) : data.length === 0 ? (
-                        <Text>No data found</Text>
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: SIZES.medium }}>
+                            <ActivityIndicator size="large" color={COLORS.primary} />
+                        </View>
+                    ) : error ? (
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: SIZES.medium }}>
+                            <Text style={{ color: COLORS.error, textAlign: 'center', marginBottom: SIZES.medium }}>
+                                Error: {error}
+                            </Text>
+                            <TouchableOpacity 
+                                style={{ backgroundColor: COLORS.primary, padding: SIZES.medium, borderRadius: SIZES.small }}
+                                onPress={refetch}
+                            >
+                                <Text style={{ color: COLORS.white, textAlign: 'center', fontWeight: 'bold' }}>
+                                    Retry
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : !data || data.length === 0 ? (
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: SIZES.medium }}>
+                            <Text style={{ color: COLORS.error, textAlign: 'center' }}>
+                                No job details found
+                            </Text>
+                        </View>
                     ) : (
-                        <View style={{padding: SIZES.medium, paddingBottom: 100}}>
+                        <View style={{ padding: SIZES.medium, paddingBottom: 100 }}>
                             <Company 
                                 companyLogo={data[0].employer_logo}
                                 jobTitle={data[0].job_title}
@@ -88,16 +121,17 @@ const JobDetails = () => {
                                 activeTab={activeTab}
                                 setActiveTab={setActiveTab}
                             />
-
                             {displayTabContent()}
                         </View>
                     )}
                 </ScrollView>
 
-                <JobFooter url={data[0]?.job_google_link ?? 'https://careers.google.com/jobs/results'} />
+                {data && data.length > 0 && (
+                    <JobFooter url={data[0]?.job_google_link ?? 'https://careers.google.com/jobs/results'} />
+                )}
             </>
         </SafeAreaView>
     )
 }
 
-export default JobDetails
+export default JobDetails;
